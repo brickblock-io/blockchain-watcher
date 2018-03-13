@@ -1,0 +1,62 @@
+{
+  "name": "blockchain-watcher",
+  "version": "1.0.0",
+  "description": "A Node.js microservice that watches the Ethereum blockchain for certain events",
+  "main": "index.js",
+  "author": "dev@brickblock.io",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=9.8.0",
+    "yarn": ">=1.5.1"
+  },
+  "scripts": {
+    "---SECTION:START---": "------------------- HOW TO START THE APP IN DEV AND PROD MODE --------------------",
+    "start": "node index.js",
+    "---SECTION:LINT---": "-------------------- HOW TO LINT AND FORMAT THE CODE --------------------",
+    "lint": "yarn lint:js && yarn lint:json",
+    "lint:js": "eslint *.js",
+    "lint:json": "jsonlint --quiet package.json",
+    "---SECTION:HOUSEKEEPING---": "------------ GITHOOKS, HEALTHCHECK, OPEN TODOS, VULNERABILITY CHECK etc. --------------------",
+    "precommit:comment": "Makes sure we don't commit bad code",
+    "precommit": "lint-staged",
+    "postmerge:comment": "Automatically run 'yarn install' on postmerge if the yarn.lock changed",
+    "postmerge": "$(pwd)/scripts/post-merge-githook.sh"
+  },
+  "lint-staged": {
+    "concurrent": false,
+    "linters": {
+      "*.js": [
+        "eslint --fix",
+        "prettier --write",
+        "git add"
+      ],
+      "*.json": [
+        "jsonlint-cli",
+        "git add"
+      ]
+    }
+  },
+  "dependencies": {
+    "@brickblock/smart-contracts": "^2.0.10",
+    "ethjs-filter": "^0.1.5",
+    "ethjs-provider-http": "^0.1.6",
+    "ethjs-query": "^0.3.3",
+    "web3": "^1.0.0-beta.30"
+  },
+  "devDependencies": {
+    "@brickblock/eslint-config-base": "^1.7.0",
+    "babel-eslint": ">= 8",
+    "eslint": ">= 4",
+    "eslint-config-prettier": ">= 2.7.0",
+    "eslint-plugin-flowtype": ">= 2.44.0",
+    "eslint-plugin-import": ">= 2.8.0",
+    "eslint-plugin-prettier": ">= 2.6.0",
+    "eslint-plugin-promise": ">= 3.6.0",
+    "eslint-plugin-security": ">= 1.4.0",
+    "husky": "^0.14.3",
+    "jsonlint-cli": "^1.0.1",
+    "lint-staged": "^7.0.0",
+    "prettier": "^1.11.1"
+  }
+}
