@@ -1,0 +1,150 @@
+cache:
+  untracked: true
+  key: $CI_COMMIT_REF_NAME
+  paths:
+    - .yarn-cache/
+variables:
+  # From the docs: https://docs.gitlab.com/ee/ci/yaml/#git-strategy
+  #   „fetch is faster as it re-uses the project workspace (falling back
+  #   to clone if it doesn't exist). git clean is used to undo any changes
+  #   made by the last job, and git fetch is used to retrieve commits
+  #   made since the last job ran.“
+  GIT_STRATEGY: fetch
+  # https://medium.com/@gajus/making-docker-in-docker-builds-x2-faster-using-docker-cache-from-option-c01febd8ef84
+  # The 'latest' image. Used as a base to cache from
+  # when building the $BUILD_IMAGE.
+  SERVICE_NAME: blockchain-watcher
+  SERVER_HOSTNAME: brickblock-cloud.io
+
+stages:
+  - setup
+  - test
+  - deploy
+
+before_script:
+  - eval export REGISTRY_URL="eu.gcr.io/sonorous-cacao-185213/$SERVICE_NAME"
+  - eval export SHORT_GIT_SHA=$(git rev-parse --short HEAD)
+  - eval export SANITIZED_BRANCH_NAME=$(echo $CI_COMMIT_REF_NAME | sed -e "s/\//-/g")
+  # The image tag of this build
+  - eval export BUILD_IMAGE=${REGISTRY_URL}:${SANITIZED_BRANCH_NAME}-${SHORT_GIT_SHA}
+  - eval export CACHE_TAG=${REGISTRY_URL}:cache
+  # The fqdn of the gitlab server is not available in the standard env vars so we cut it out of this URL
+  - eval export GITLAB_HOSTNAME=$(echo $CI_PROJECT_URL | awk -F/ '{print $3}')
+
+
+#########
+# SETUP #
+#########
+setup:
+  tags:
+    - google
+  stage: setup
+  cache:
+    key: $CI_COMMIT_REF_NAME
+    paths:
+      - node_modules/
+  artifacts:
+    expire_in: 3d
+    paths:
+      - node_modules
+  script:
+    - yarn install --pure-lockfile --cache-folder .yarn-cache
+
+
+#########
+# TESTS #
+#########
+flow:
+  tags:
+    - google
+  stage: test
+  cache:
+    policy: pull
+  script:
+    - yarn flow
+
+lint:
+  tags:
+    - google
+  stage: test
+  cache:
+    policy: pull
+  script:
+    - yarn lint
+
+test:
+  tags:
+    - google
+  stage: test
+  cache:
+    policy: pull
+  script:
+    - yarn test
+
+
+#########
+# BUILD #
+#########
+build:
+  tags:
+    - google
+  stage: test
+  cache:
+    policy: pull
+  script:
+    - gcloud docker --authorize-only
+    - docker build
+      --pull
+      --tag $BUILD_IMAGE
+      --cache-from $CACHE_TAG
+      .
+    # Push container to GitLab docker registry
+    - docker push $BUILD_IMAGE
+    - docker tag $BUILD_IMAGE $CACHE_TAG
+    - docker push $CACHE_TAG
+
+
+###########
+# STAGING #
+###########
+deploy-staging:
+  tags:
+    - google
+  stage: deploy
+  environment:
+    name: staging
+  only:
+    - master
+  variables:
+    KUBERNETES_REPLICAS: 1
+    POSTGRES_INSTANCE: sonorous-cacao-185213:europe-west1:testing-blockchain-watcher
+  cache:
+    policy: pull
+  script:
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@${GITLAB_HOSTNAME}/infrastructure/infra.git
+    - /bin/sh $(pwd)/infra/k8s/deploy.sh staging-${SERVICE_NAME} with-postgres
+
+
+##############
+# PRODUCTION #
+##############
+deploy-production:
+  tags:
+    - google
+  stage: deploy
+  environment:
+    name: production
+  cache:
+    policy: pull
+  variables:
+    KUBERNETES_REPLICAS: 1
+    POSTGRES_INSTANCE: sonorous-cacao-185213:europe-west1:production-blockchain-watcher
+  script:
+    - docker login $CI_REGISTRY -u gitlab-ci-token -p $CI_JOB_TOKEN
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@${GITLAB_HOSTNAME}/infrastructure/infra.git
+    - /bin/sh $(pwd)/infra/k8s/deploy.sh production-${SERVICE_NAME} with-postgres
+  # These two 'onlys' give us AND logic. The commit should both be in master AND be tagged. NB. this is git tagging. not 'gitlab' tagging.
+  only:
+    - master
+  only:
+    - tags

@@ -7,19 +7,40 @@
   "license": "MIT",
   "private": true,
   "engines": {
-    "node": ">=9.8.0",
+    "node": ">=8.10.0",
     "yarn": ">=1.5.1"
   },
   "scripts": {
-    "---SECTION:START---": "------------------- HOW TO START THE APP IN DEV AND PROD MODE --------------------",
-    "start": "node index.js",
-    "---SECTION:LINT---": "-------------------- HOW TO LINT AND FORMAT THE CODE --------------------",
+    "---SECTION:START---": "---HOW TO START THE APP IN DEV AND PROD MODE---",
+    "start": "NODE_PATH=./src flow-node src/index.js | bunyan",
+    "start:prod": "yarn db:migrate && NODE_PATH=./build node build/index.js",
+    "start:debug": "echo 'chrome://inspect' && NODE_PATH=./src flow-node --inspect src/index.js",
+    "---SECTION:INSTALL---": "---HOW TO INSTALL DEPS FOR THE APP IN PROD MODE---",
+    "install:prod": "yarn install --pure-lockfile --production && yarn cache clean",
+    "---SECTION:DATABASE---": "---HOW TO MAKE AND RUN MIGRATIONS---",
+    "db:migrate:comment": "the knex tool wants to allow many environment migration, but we are pinning to just the one specified in the `.env` file",
+    "db:migrate": "NODE_ENV=MIGRATE_NODE_ENV knex migrate:latest",
+    "db:migrate:make": "NODE_ENV=MIGRATE_NODE_ENV knex migrate:make --",
+    "db:migrate:rollback": "NODE_ENV=MIGRATE_NODE_ENV knex migrate:rollback",
+    "---SECTION:BUILD---": "---HOW TO BUILD THE APP FOR PROD MODE---",
+    "build:comment": "this tool is faster than using the babel plugin, it also provides `flow-node` for development",
+    "build": "flow-remove-types --pretty src/ --out-dir build/",
+    "---SECTION:LINT---": "---HOW TO LINT AND FORMAT THE CODE---",
     "lint": "yarn lint:js && yarn lint:json",
-    "lint:js": "eslint *.js",
+    "lint:js": "eslint src/**/*.js",
     "lint:json": "jsonlint --quiet package.json",
-    "---SECTION:HOUSEKEEPING---": "------------ GITHOOKS, HEALTHCHECK, OPEN TODOS, VULNERABILITY CHECK etc. --------------------",
+    "---SECTION:TYPECHECK---": "---HOW TO TYPECHECK THE APP WITH FLOW---",
+    "flow:comment": "Runs flow type checker",
+    "flow": "flow",
+    "flow:install:types": "flow-typed install",
+    "---SECTION:TEST---": "---HOW TO TEST THE APP---",
+    "test": "NODE_PATH=./src nyc ava",
+    "test:coverage": "nyc report",
+    "test:watch": "ava --watch",
+    "---SECTION:HOUSEKEEPING---": "---GITHOOKS, HEALTHCHECK, OPEN TODOS, VULNERABILITY CHECK etc.---",
     "precommit:comment": "Makes sure we don't commit bad code",
     "precommit": "lint-staged",
+    "prepush": "yarn lint && yarn flow && yarn test",
     "postmerge:comment": "Automatically run 'yarn install' on postmerge if the yarn.lock changed",
     "postmerge": "$(pwd)/scripts/post-merge-githook.sh"
   },
@@ -38,14 +59,20 @@
     }
   },
   "dependencies": {
-    "@brickblock/smart-contracts": "^2.0.10",
-    "ethjs-filter": "^0.1.5",
-    "ethjs-provider-http": "^0.1.6",
-    "ethjs-query": "^0.3.3",
-    "web3": "^1.0.0-beta.30"
+    "@brickblock/smart-contracts": "2.3.1",
+    "bn.js": "4.11.8",
+    "bunyan": "1.8.12",
+    "dotenv": "5.0.1",
+    "eth-query": "2.1.2",
+    "ethereumjs-abi": "0.6.5",
+    "js-sha3": "0.7.0",
+    "knex": "^0.14.4",
+    "pg": "^7.4.1",
+    "web3-providers-http": "1.0.0-beta.33"
   },
   "devDependencies": {
-    "@brickblock/eslint-config-base": "^1.7.0",
+    "@brickblock/eslint-config-base": "1.x",
+    "ava": "0.25.0",
     "babel-eslint": ">= 8",
     "eslint": ">= 4",
     "eslint-config-prettier": ">= 2.7.0",
@@ -54,9 +81,22 @@
     "eslint-plugin-prettier": ">= 2.6.0",
     "eslint-plugin-promise": ">= 3.6.0",
     "eslint-plugin-security": ">= 1.4.0",
-    "husky": "^0.14.3",
-    "jsonlint-cli": "^1.0.1",
-    "lint-staged": "^7.0.0",
-    "prettier": "^1.11.1"
+    "flow-bin": "0.x",
+    "flow-remove-types": "1.x",
+    "flow-typed": "2.x",
+    "husky": "0.x",
+    "jsonlint-cli": "1.x",
+    "lint-staged": "7.x",
+    "nyc": "11.x",
+    "prettier": "1.x"
+  },
+  "ava": {
+    "babel": null,
+    "compileEnhancements": false,
+    "files": "src/**/*.test.js",
+    "sources": "src/**/*.js",
+    "require": [
+      "flow-remove-types/register"
+    ]
   }
 }
