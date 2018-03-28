@@ -42,7 +42,8 @@ const getContactForEthereumAddress: GetContactForEthereumAddressT = async ethere
   const result = await knex
     .select('*')
     .from('contact_data')
-    .where({ ethereum_address: ethereumAddress })
+    // .where({ ethereum_address: ethereumAddress })
+    .where({ ethereum_address: '0x123' })
 
   return first(result)
 }

@@ -63,15 +63,6 @@ flow:
   script:
     - yarn flow
 
-lint:
-  tags:
-    - google
-  stage: test
-  cache:
-    policy: pull
-  script:
-    - yarn lint
-
 test:
   tags:
     - google
