@@ -16,7 +16,8 @@ type EthereumProviderConfigT = {
 
 type BootstrapConfigT = {
   contract: ContractConfigT,
-  ethereumProvider: EthereumProviderConfigT
+  ethereumProvider: EthereumProviderConfigT,
+  maxBlockDifference: number
 }
 
 // ---
@@ -65,9 +66,10 @@ const callGetLog = (ethQuery, filter) => {
   })
 }
 
-type SetupWorkersT = (ContractConfigT, *, *) => void
+type SetupWorkersT = (ContractConfigT, number, *, *) => void
 const setupWorkers: SetupWorkersT = (
   contractConfig,
+  maxBlockDifference,
   ethQuery,
   blockEmitter
 ) => {
@@ -89,8 +91,21 @@ const setupWorkers: SetupWorkersT = (
   }
 
   const handleBlockEvent = async latestBlockNumber => {
-    state.toBlock = latestBlockNumber
-    logger.trace('handleBlockEvent->BEGIN for block number', latestBlockNumber)
+    const blockDifference = latestBlockNumber - state.fromBlock
+
+    if (blockDifference < 0) {
+      blockEmitter.emit(
+        'error',
+        'handleBlockEvent has a negative block difference; possibly the contractConfig.deployedAtBlock is incorrect'
+      )
+
+      return
+    }
+
+    state.toBlock =
+      state.fromBlock + Math.min(blockDifference, maxBlockDifference)
+
+    logger.trace('handleBlockEvent->BEGIN with state', state)
 
     const filter = formatFilterParams({
       address: eventToWatch.contractAddress,
@@ -139,7 +154,12 @@ const bootstrap: BootstrapT = config => {
     config.ethereumProvider.getBlockNumberInterval
   )
 
-  setupWorkers(config.contract, ethQuery, blockEmitter)
+  setupWorkers(
+    config.contract,
+    config.maxBlockDifference,
+    ethQuery,
+    blockEmitter
+  )
 
   blockEmitter.on('error', status => {
     logger.error('blockEmitter error event ->', status)
@@ -170,5 +190,6 @@ bootstrap({
   ethereumProvider: {
     getBlockNumberInterval: Number(getEnvVar('GET_BLOCK_NUMBER_INTERVAL')),
     url: getEnvVar('INFURA_URL')
-  }
+  },
+  maxBlockDifference: Number(getEnvVar('MAX_BLOCK_DIFFERENCE'))
 })
