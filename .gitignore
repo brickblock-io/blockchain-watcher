@@ -5,16 +5,13 @@ node_modules
 package-lock.json
 yarn-error.log
 
-# built contracts
+# built assets
 build
 
 # testing
+.nyc_output
 coverage
 coverage.json
-
-# production
-build
-src/contracts
 
 # misc
 .DS_Store
