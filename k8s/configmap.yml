@@ -11,3 +11,4 @@ data:
   PORT: "8080"
   POSTGRES_DATABASE: blockchain_watcher
   POSTGRES_HOST: localhost
+  SECRET_NPM_TOKEN: "meow"
