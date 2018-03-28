@@ -92,6 +92,7 @@ build:
   cache:
     policy: pull
   script:
+    - yarn build
     - gcloud docker --authorize-only
     - docker build
       --pull
