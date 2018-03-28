@@ -16,7 +16,4 @@ const config = {
   }
 }
 
-// eslint-disable-next-line no-console
-console.log('using config', JSON.stringify(config, null, 2))
-
 module.exports = config
