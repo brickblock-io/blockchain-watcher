@@ -17,8 +17,7 @@ type ConnectionConfigT = {
 
 export type ContactT = {
   email: EmailAddressT,
-  firstName: string,
-  lastName: string
+  name: string
 }
 
 type EventNameT = string

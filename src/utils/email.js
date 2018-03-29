@@ -1,23 +1,61 @@
 // @flow
 
-import type { ContactT } from 'utils/db'
+type SendGridMessageT<A> = {
+  from: string,
+  html: string,
+  subject: string,
+  substitutions: A,
+  templateId: string,
+  text: string,
+  to: string
+}
 
-type EmailTemplatesT = $Keys<typeof emailTemplates>
+type SendGridBuyEventSubstitutionsT = {|
+  amount: string,
+  name: string,
+  transactionHash: string
+|}
 
 // ---
 
-const logger = require('utils/logger')('email')
+const sendgrid = require('@sendgrid/mail')
 
-// TODO: for each eventName we should have a email template
-// and have a active sendGrid connection
-const emailTemplates = {
-  BuyEvent: 'ec711ca7-304c-48ec-afd9-7ba48c070a05'
+const getEnvVar = require('utils/get-env-var')
+
+// setup config first, if env vars are missing we want this to error
+const emailConfig = {
+  apiKey: getEnvVar('SENDGRID_API_KEY'),
+  fromAddress: getEnvVar('EMAIL_FROM_ADDRESS'),
+  templates: {
+    BuyEvent: getEnvVar('SENDGRID_TEMPLATE_ID_BUY_EVENT')
+  }
 }
 
-type SendEmailT = (EmailTemplatesT, ContactT) => Promise<*>
-const sendEmail: SendEmailT = (eventName, contact) =>
-  Promise.resolve(() => {
-    logger.info('sendEmail', eventName, contact)
-  })
+// initialize sendgrid library
+sendgrid.setApiKey(emailConfig.apiKey)
+sendgrid.setSubstitutionWrappers('{{', '}}')
 
-module.exports = sendEmail
+type SendBuyEventEmailT = (*, *) => Promise<*>
+const sendBuyEventEmail: SendBuyEventEmailT = (contactData, log) => {
+  const msg: SendGridMessageT<SendGridBuyEventSubstitutionsT> = {
+    to: contactData.email,
+    from: emailConfig.fromAddress,
+    // subject, text, and html will be provided by the template we are using
+    // this library demands that there is a string with at least one character..
+    subject: 'null',
+    text: 'null',
+    html: 'null',
+    templateId: emailConfig.templates.BuyEvent,
+    substitutions: {
+      amount: log.data.amount,
+      name: contactData.name,
+      transactionHash: log.transactionHash
+    }
+  }
+
+  return sendgrid.send(msg)
+}
+
+module.exports = {
+  sendBuyEventEmail
+}

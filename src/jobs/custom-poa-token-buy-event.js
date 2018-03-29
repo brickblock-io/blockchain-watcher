@@ -3,14 +3,14 @@
 import type { EthereumAddressT } from 'types/ethereum-general'
 import type { ParsedLogT } from 'utils/events'
 
-type BuyEventDataT = {
+export type BuyEventDataT = {
   amount: string,
   buyer: EthereumAddressT
 }
 
 // ---
 
-const sendEmail = require('utils/email')
+const { sendBuyEventEmail } = require('utils/email')
 const { queries } = require('utils/db')
 
 const logger = require('utils/logger')('jobs/poa-token')
@@ -44,7 +44,7 @@ const handleBuyEvent: HandleBuyEventT = async log => {
     return
   }
 
-  await sendEmail(eventName, contactData)
+  await sendBuyEventEmail(contactData, log)
   await queries.saveEmailReceipt(
     eventName,
     contactData.email,

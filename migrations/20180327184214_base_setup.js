@@ -6,8 +6,7 @@ const up = knex =>
       table.text('email').primary()
 
       table.text('ethereum_address').index()
-      table.text('first_name')
-      table.text('last_name')
+      table.text('name')
     })
     .createTable('email_receipts', table => {
       table.increments('id').primary()

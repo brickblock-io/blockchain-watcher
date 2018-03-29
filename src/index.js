@@ -32,14 +32,9 @@ const handleBuyEvent = require('jobs/custom-poa-token-buy-event')
 const { buildEventMapFromAbi } = require('utils/events')
 const { formatFilterParams } = require('utils/filter')
 const { setupDatabaseConnection } = require('utils/db')
+const getEnvVar = require('utils/get-env-var')
 
 const logger = require('utils/logger')('index')
-
-const getEnvVar = name => {
-  if (!process.env[name]) throw Error(`process.env.${name} is missing`)
-
-  return process.env[name]
-}
 
 const setupProvider = config => {
   const httpProvider = new HttpProvider(config.ethereumProvider.url)
