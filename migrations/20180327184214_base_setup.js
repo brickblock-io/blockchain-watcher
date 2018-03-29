@@ -18,6 +18,7 @@ const up = knex =>
     .createTable('events', table => {
       table.increments('id').primary()
 
+      table.text('contract_address').index()
       table.json('event_data')
       table.text('event_name').index()
       table.text('transaction_hash').index()
