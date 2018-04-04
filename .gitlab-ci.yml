@@ -84,6 +84,10 @@ build:
     policy: pull
   script:
     - yarn build
+    # TODO: We do this `yarn install:prod` here because in .dockerignore "node_modules" is not listed
+    # This is only due to @brickblock/smart-contracts being a closed source npm package that is
+    # needed for production build. Once this is open sourced, we can `yarn install:prod` in the Dockerfile
+    - yarn install:prod
     - gcloud docker --authorize-only
     - docker build
       --pull

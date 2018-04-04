@@ -13,6 +13,9 @@ WORKDIR /opt/app
 # Copy over application files
 COPY . ./
 
+# remove this so yarn does not complain about SECRET_NPM_TOKEN running any yarn task
+RUN rm .npmrc
+
 # Use dumb-init as the entrypoint for correct and prompt
 # handling of SIGINT, SIGTERM etc.
 ENTRYPOINT ["dumb-init"]
