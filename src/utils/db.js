@@ -41,6 +41,7 @@ const getContactForEthereumAddress: GetContactForEthereumAddressT = async ethere
   const result = await knex
     .select('*')
     .from('contact_data')
+    // TODO: hey, we should not do this when we are live :)
     // .where({ ethereum_address: ethereumAddress })
     .where({ ethereum_address: '0x123' })
 
@@ -72,7 +73,7 @@ const emailReceiptExists: EmailReceiptExistsT = async (
   txHash
 ) => {
   const result = await knex
-    .select('id')
+    .select(1)
     .from('email_receipts')
     .where({
       contact_email: email,
@@ -87,6 +88,7 @@ type ArchiveEventT = (ParsedLogT<*>) => Promise<*>
 const archiveEvent: ArchiveEventT = parsedLog =>
   knex
     .insert({
+      contract_address: parsedLog.address,
       event_name: parsedLog.eventName,
       event_data: JSON.stringify(parsedLog.data),
       transaction_hash: parsedLog.transactionHash
