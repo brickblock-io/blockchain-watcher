@@ -38,7 +38,7 @@ const handleBuyEvent: HandleBuyEventT = async log => {
 
   if (haveReceipt) {
     logger.trace(
-      'handleBuyEvent->NOWORK for transaction hash',
+      'handleBuyEvent->NOWORK already have a email receipt for transaction hash',
       log.transactionHash
     )
     return

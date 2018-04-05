@@ -14,16 +14,16 @@ export type EthereumBlockNumberT =
   | 'pending'
   | 'earliest'
 
-export type EthereumRPCLogFilterT = {
+export type EthereumRPCLogFilterT = {|
   address?: EthereumAddressT,
   fromBlock?: EthereumBlockNumberT,
   toBlock?: EthereumBlockNumberT,
   topics?: $ReadOnlyArray<?PrefixedHexT>
-}
+|}
 
 // Unfortunately it doesn't seem you can type Array length in flow, otherwise it would make sense
 // to give a type to be plugged into the topics property
-export type EthereumLogT = {
+export type EthereumLogT = {|
   address: EthereumAddressT,
   blockHash: PrefixedHexT,
   blockNumber: PrefixedHexT,
@@ -33,4 +33,4 @@ export type EthereumLogT = {
   topics: $ReadOnlyArray<PrefixedHexT>,
   transactionHash: EthereumTransactionHashT,
   transactionIndex: PrefixedHexT
-}
+|}

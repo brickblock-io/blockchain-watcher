@@ -10,7 +10,7 @@ export type ContractAbiT = $ReadOnlyArray<AbiT | FallbackAbiT | ConstructorAbiT>
 // function call processing
 export type AbiT = FunctionAbiT | EventAbiT
 
-type FunctionAbiT = {
+type FunctionAbiT = {|
   constant: boolean,
   inputs: FunctionAbiInputOutputT,
   name: string,
@@ -18,34 +18,34 @@ type FunctionAbiT = {
   payable: boolean,
   stateMutability: 'nonpayable' | 'payable' | 'view',
   type: 'function'
-}
+|}
 
-type FunctionAbiInputOutputT = $ReadOnlyArray<{
+type FunctionAbiInputOutputT = $ReadOnlyArray<{|
   name: string,
   type: AbiTypeT
-}>
+|}>
 
-type EventAbiT = {
+type EventAbiT = {|
   anonymous: boolean,
   inputs: EventAbiInputsT,
   name: string,
   type: 'event'
-}
+|}
 
-export type EventAbiInputsT = $ReadOnlyArray<{
+export type EventAbiInputsT = $ReadOnlyArray<{|
   indexed: boolean,
   name: string,
   type: AbiTypeT
-}>
+|}>
 
-type FallbackAbiT = {
+type FallbackAbiT = {|
   payable: true,
   stateMutability: 'payable',
   type: 'fallback'
-}
+|}
 
-type ConstructorAbiT = {
+type ConstructorAbiT = {|
   inputs: FunctionAbiInputOutputT,
   payable: false,
   type: 'constructor'
-}
+|}

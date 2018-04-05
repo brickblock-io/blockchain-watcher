@@ -49,6 +49,7 @@ const formatFilterParams: FormatFilterParamsT = params => {
       x => (x == null ? x : leftPadFilterTopicsParam(x))
     )
 
+  // $FlowIgnore: there might be an empty object here, and flow treats its as "unsealed"
   return formatted
 }
 
