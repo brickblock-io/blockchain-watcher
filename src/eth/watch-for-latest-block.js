@@ -1,17 +1,25 @@
 // @flow
 
-const EventEmitter = require('events')
+import type EventEmitter from 'events'
+
+type StateT = {|
+  errorCount: number,
+  lastBlockNumber: number
+|}
+
+// ---
 
 const { hexToNumber } = require('utils/hex')
 
-const logger = require('utils/logger')('watchForLatestBlock')
+const logger = require('utils/logger')('watch-for-latest-block')
 
 const maxConsecutiveErrors = 10
 
-type WatchForLatestBlockT = (*, number) => EventEmitter
+type WatchForLatestBlockT = (number, *, EventEmitter) => void
 const watchForLatestBlock: WatchForLatestBlockT = (
+  pollingInterval,
   ethQuery,
-  pollingInterval
+  eventChannel
 ) => {
   logger.info(
     'watchForLatestBlock->INIT using pollingInterval',
@@ -20,8 +28,7 @@ const watchForLatestBlock: WatchForLatestBlockT = (
     maxConsecutiveErrors
   )
 
-  const blockEmitter = new EventEmitter()
-  const state = {
+  const state: StateT = {
     lastBlockNumber: 0,
     errorCount: 0
   }
@@ -37,7 +44,7 @@ const watchForLatestBlock: WatchForLatestBlockT = (
         state.errorCount += 1
 
         if (state.errorCount > maxConsecutiveErrors) {
-          blockEmitter.emit(
+          eventChannel.emit(
             'error',
             `fetchLatestBlockNumber errorCount exceeded maximum of ${maxConsecutiveErrors} consecutive errors`
           )
@@ -52,17 +59,15 @@ const watchForLatestBlock: WatchForLatestBlockT = (
       state.errorCount = 0
 
       if (blockNumber !== state.lastBlockNumber) {
-        logger.info('watchForLatestBlock->EMIT', blockNumber)
+        logger.info('fetchLatestBlockNumber->EMIT', blockNumber)
         state.lastBlockNumber = blockNumber
-        blockEmitter.emit('block', blockNumber)
+        eventChannel.emit('latest-block-number', blockNumber)
       }
     })
   }
 
   setInterval(fetchLatestBlockNumber, pollingInterval)
   fetchLatestBlockNumber()
-
-  return blockEmitter
 }
 
 module.exports = watchForLatestBlock

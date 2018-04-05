@@ -1,42 +1,28 @@
 // @flow
 
-import type { ContractAbiT } from 'types/ethereum-abi'
-import type { PrefixedHexT } from 'types/hex'
-
-type ContractConfigT = {
-  abi: ContractAbiT,
-  address: PrefixedHexT,
-  deployedAtBlock: number
-}
-
-type EthereumProviderConfigT = {
-  getBlockNumberInterval: number,
-  url: string
-}
-
-type BootstrapConfigT = {
-  contract: ContractConfigT,
-  ethereumProvider: EthereumProviderConfigT,
-  maxBlockDifference: number
-}
+import type { BootstrapConfigT } from 'types/worker-config'
 
 // ---
 
 require('dotenv').config()
 
 const EthereumQuery = require('eth-query')
+const EventEmitter = require('events')
 const HttpProvider = require('web3-providers-http')
 
-const watchForLatestBlock = require('eth/watch-for-latest-block')
-const handleBuyEvent = require('jobs/custom-poa-token-buy-event')
-const { buildEventMapFromAbi } = require('utils/events')
-const { formatFilterParams } = require('utils/filter')
-const { setupDatabaseConnection } = require('utils/db')
 const getEnvVar = require('utils/get-env-var')
+const setupWorkers = require('./setup-workers')
+const watchForLatestBlock = require('eth/watch-for-latest-block')
+const { setupDatabaseConnection } = require('utils/db')
 
 const logger = require('utils/logger')('index')
 
-const setupProvider = config => {
+const shutdown = () => {
+  logger.fatal('shutting down')
+  process.exit(-1)
+}
+
+const setupWeb3Provider = config => {
   const httpProvider = new HttpProvider(config.ethereumProvider.url)
   // doing this for eth-query interface expectations
   httpProvider.sendAsync = httpProvider.send
@@ -44,122 +30,40 @@ const setupProvider = config => {
   return httpProvider
 }
 
-const callGetLog = (ethQuery, filter) => {
-  logger.trace('callGetLog->BEGIN with filter', filter)
-
-  return new Promise((resolve, reject) => {
-    ethQuery.getLogs(filter, (error, result) => {
-      if (error) {
-        logger.error('callGetLog->ERROR', error)
-        reject(error)
-        return
-      }
-
-      logger.trace('callGetLog->SUCCESS')
-      resolve(result)
-    })
-  })
-}
-
-type SetupWorkersT = (ContractConfigT, number, *, *) => void
-const setupWorkers: SetupWorkersT = (
-  contractConfig,
-  maxBlockDifference,
-  ethQuery,
-  blockEmitter
-) => {
-  logger.info('setupWorkers->INIT')
-
-  const contractMap = buildEventMapFromAbi(contractConfig.abi)
-  const state = {
-    fromBlock: contractConfig.deployedAtBlock,
-    // start with 0, we only call `handleBlockEvent` after receiving a block number
-    toBlock: 0
-  }
-
-  // NOTE: in the future if we want to watch more events, will need to have some named mapping so
-  // that these config objects can be defined in this repo
-  const eventToWatch = {
-    contractAddress: contractConfig.address,
-    processLog: log => handleBuyEvent(contractMap.BuyEvent.parseLog(log)),
-    topics: [contractMap.BuyEvent.topicHash]
-  }
-
-  const handleBlockEvent = async latestBlockNumber => {
-    const blockDifference = latestBlockNumber - state.fromBlock
-
-    if (blockDifference < 0) {
-      blockEmitter.emit(
-        'error',
-        'handleBlockEvent has a negative block difference; possibly the contractConfig.deployedAtBlock is incorrect'
-      )
-
-      return
-    }
-
-    state.toBlock =
-      state.fromBlock + Math.min(blockDifference, maxBlockDifference)
-
-    logger.trace('handleBlockEvent->BEGIN with state', state)
-
-    const filter = formatFilterParams({
-      address: eventToWatch.contractAddress,
-      fromBlock: state.fromBlock,
-      toBlock: state.toBlock,
-      topics: eventToWatch.topics
-    })
-
-    // updating first, in case processing all logs takes longer than the next block arriving
-    state.fromBlock = state.toBlock + 1
-
-    try {
-      const logList = await callGetLog(ethQuery, filter)
-      if (logList.length === 0) return
-
-      logger.info(`handleBlockEvent processing ${logList.length} logs`)
-      await Promise.all(logList.map(eventToWatch.processLog))
-    } catch (error) {
-      // we are following a "let it fail" setup here, an error should cause a process exit
-      logger.error('handleBlockEvent->ERROR', error)
-      blockEmitter.emit(
-        'error',
-        'handleBlockEvent was unable to finish processing all logs'
-      )
-    }
-
-    logger.trace(
-      'handleBlockEvent->SUCCESS for block number',
-      latestBlockNumber
-    )
-  }
-
-  blockEmitter.on('block', handleBlockEvent)
-
-  logger.info('setupWorkers->DONE')
-}
-
 type BootstrapT = BootstrapConfigT => void
 const bootstrap: BootstrapT = config => {
   logger.info('bootstrap->INIT')
 
-  const currentProvider = setupProvider(config)
+  const eventChannel = new EventEmitter()
+  const currentProvider = setupWeb3Provider(config)
   const ethQuery = new EthereumQuery(currentProvider)
-  const blockEmitter = watchForLatestBlock(
-    ethQuery,
-    config.ethereumProvider.getBlockNumberInterval
-  )
 
+  watchForLatestBlock(
+    config.ethereumProvider.getBlockNumberInterval,
+    ethQuery,
+    eventChannel
+  )
   setupWorkers(
     config.contract,
     config.maxBlockDifference,
     ethQuery,
-    blockEmitter
+    eventChannel
   )
 
-  blockEmitter.on('error', status => {
-    logger.error('blockEmitter error event ->', status)
-    logger.fatal('shutting down due to error event')
-    process.exit(-1)
+  eventChannel.on('error', status => {
+    logger.error('eventChannel error event ->', status)
+    shutdown()
+  })
+
+  // kubernetes will send a SIGTERM before it kills the pod, with a 30 second delay before SIGKILL
+  // we should finish processing any active jobs, and then exit
+  process.on('SIGTERM', () => {
+    logger.info('process received SIGTERM')
+    eventChannel.emit('workers/SIGTERM')
+    eventChannel.on('workers/SIGTERM/success', () => {
+      logger.info('eventChannel received workers/SIGTERM/success')
+      shutdown()
+    })
   })
 
   logger.info('bootstrap->DONE')
