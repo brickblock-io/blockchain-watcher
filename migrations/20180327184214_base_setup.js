@@ -3,17 +3,15 @@
 const up = knex =>
   knex.schema
     .createTable('contact_data', table => {
-      table.text('email').primary()
-      ;[table.text('ethereum_address').index(), table.text('name')].forEach(x =>
-        x.notNullable()
-      )
+      table.uuid('uuid').primary()
+      ;[
+        table.text('email').index(),
+        table.text('ethereum_address').index(),
+        table.text('name')
+      ].forEach(x => x.notNullable())
     })
     .createTable('email_receipts', table => {
-      table.text('transaction_hash').primary()
-      ;[
-        table.text('contact_email').index(),
-        table.text('event_name').index()
-      ].forEach(x => x.notNullable())
+      table.text('hash').primary()
     })
     .createTable('events', table => {
       table.increments('id').primary()

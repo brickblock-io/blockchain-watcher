@@ -111,9 +111,9 @@
   version "1.14.0"
   resolved "https://registry.yarnpkg.com/@brickblock/eslint-config-base/-/eslint-config-base-1.14.0.tgz#2821905d3ba9910d0aecf5ebba00bf090ebe6d4e"
 
-"@brickblock/smart-contracts@2.3.1":
-  version "2.3.1"
-  resolved "https://registry.yarnpkg.com/@brickblock/smart-contracts/-/smart-contracts-2.3.1.tgz#4dab026064c49c30177a52994ab0652ca66ed55e"
+"@brickblock/smart-contracts@2.3.2":
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/@brickblock/smart-contracts/-/smart-contracts-2.3.2.tgz#bc6fb301efa07543006ac5bd8658d9ec2ac50b62"
   dependencies:
     babel-eslint "^8.2.1"
     eslint "^4.17.0"

@@ -6,8 +6,6 @@ import type {
 } from 'types/ethereum-general'
 import type { ParsedLogT } from 'utils/events'
 
-export type EmailAddressT = string
-
 type ConnectionConfigT = {
   database: string,
   host: string,
@@ -16,17 +14,28 @@ type ConnectionConfigT = {
 }
 
 export type ContactT = {
-  email: EmailAddressT,
-  name: string
+  email: string,
+  name: string,
+  uuid: string
 }
 
-type EventNameT = string
-
 // ---
+
+const sha3 = require('js-sha3')
 
 const { first, isEmpty } = require('utils/fn')
 
 let knex
+
+type HashEmailReceiptT = (string, string, EthereumTransactionHashT) => string
+const hashEmailReceipt: HashEmailReceiptT = (contactUuid, eventName, txHash) =>
+  sha3.keccak_256(
+    JSON.stringify({
+      contact_uuid: contactUuid,
+      event_name: eventName,
+      transaction_hash: txHash
+    })
+  )
 
 type SetupDatabaseConnectionT = ConnectionConfigT => void
 const setupDatabaseConnection: SetupDatabaseConnectionT = connectionConfig => {
@@ -49,36 +58,32 @@ const getContactForEthereumAddress: GetContactForEthereumAddressT = async ethere
 }
 
 type SaveEmailReceiptT = (
-  EventNameT,
-  EmailAddressT,
+  string,
+  string,
   EthereumTransactionHashT
 ) => Promise<*>
-const saveEmailReceipt: SaveEmailReceiptT = (eventName, email, txHash) =>
+const saveEmailReceipt: SaveEmailReceiptT = (contactUuid, eventName, txHash) =>
   knex
     .insert({
-      contact_email: email,
-      event_name: eventName,
-      transaction_hash: txHash
+      hash: hashEmailReceipt(contactUuid, eventName, txHash)
     })
     .into('email_receipts')
 
 type EmailReceiptExistsT = (
-  EmailAddressT,
-  EventNameT,
+  string,
+  string,
   EthereumTransactionHashT
 ) => Promise<boolean>
 const emailReceiptExists: EmailReceiptExistsT = async (
+  contactUuid,
   eventName,
-  email,
   txHash
 ) => {
   const result = await knex
     .select(1)
     .from('email_receipts')
     .where({
-      contact_email: email,
-      event_name: eventName,
-      transaction_hash: txHash
+      hash: hashEmailReceipt(contactUuid, eventName, txHash)
     })
 
   return !isEmpty(result)

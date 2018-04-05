@@ -31,8 +31,8 @@ const handleBuyEvent: HandleBuyEventT = async log => {
   }
 
   const haveReceipt = await queries.emailReceiptExists(
+    contactData.uuid,
     eventName,
-    contactData.email,
     log.transactionHash
   )
 
@@ -46,8 +46,8 @@ const handleBuyEvent: HandleBuyEventT = async log => {
 
   await sendBuyEventEmail(contactData, log)
   await queries.saveEmailReceipt(
+    contactData.uuid,
     eventName,
-    contactData.email,
     log.transactionHash
   )
 
