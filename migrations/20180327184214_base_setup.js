@@ -17,6 +17,7 @@ const up = knex =>
       table.increments('id').primary()
       ;[
         table.text('contract_address').index(),
+        table.text('block_number').index(),
         table.json('event_data'),
         table.text('event_name').index(),
         table.text('transaction_hash').index()

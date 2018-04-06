@@ -94,6 +94,7 @@ const archiveEvent: ArchiveEventT = parsedLog =>
   knex
     .insert({
       contract_address: parsedLog.address,
+      block_number: parsedLog.blockNumber,
       event_name: parsedLog.eventName,
       event_data: JSON.stringify(parsedLog.data),
       transaction_hash: parsedLog.transactionHash
