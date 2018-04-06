@@ -7,7 +7,7 @@ data:
   CONTRACT_DEPLOYED_AT_BLOCK: "1960183"
   INFURA_URL: "https://rinkeby.infura.io"
   GET_BLOCK_NUMBER_INTERVAL: "10000"
-  LOG_LEVEL: "trace"
+  LOG_LEVEL: "${LOG_LEVEL}"
   MAX_BLOCK_DIFFERENCE: "100000"
   PORT: "8080"
   POSTGRES_DATABASE: "blockchain_watcher"
