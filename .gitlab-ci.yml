@@ -112,6 +112,8 @@ deploy-staging:
   only:
     - master
   variables:
+    CONTRACT_ADDRESS: 0xcbf23082233ebf2b97a986b4d05669472d744e3c
+    CONTRACT_DEPLOYED_AT_BLOCK: 2080918
     KUBERNETES_REPLICAS: 1
     POSTGRES_INSTANCE: sonorous-cacao-185213:europe-west1:testing-blockchain-watcher
   cache:
@@ -133,6 +135,8 @@ deploy-production:
   cache:
     policy: pull
   variables:
+    CONTRACT_ADDRESS: 0x123
+    CONTRACT_DEPLOYED_AT_BLOCK: 2080918
     KUBERNETES_REPLICAS: 1
     POSTGRES_INSTANCE: sonorous-cacao-185213:europe-west1:production-blockchain-watcher
   script:
