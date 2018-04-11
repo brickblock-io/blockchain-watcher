@@ -136,7 +136,6 @@ deploy-production:
     KUBERNETES_REPLICAS: 1
     POSTGRES_INSTANCE: sonorous-cacao-185213:europe-west1:production-blockchain-watcher
   script:
-    - docker login $CI_REGISTRY -u gitlab-ci-token -p $CI_JOB_TOKEN
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@${GITLAB_HOSTNAME}/infrastructure/infra.git
     - /bin/sh $(pwd)/infra/k8s/deploy.sh production-${SERVICE_NAME} with-postgres
   # These two 'onlys' give us AND logic. The commit should both be in master AND be tagged. NB. this is git tagging. not 'gitlab' tagging.
