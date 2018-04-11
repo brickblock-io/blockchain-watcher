@@ -20,4 +20,11 @@ RUN rm .npmrc
 # handling of SIGINT, SIGTERM etc.
 ENTRYPOINT ["dumb-init"]
 
-CMD ["/usr/local/bin/yarn", "start:prod"]
+# As it turns out, yarn will not wait for child processes to exit, until that is fixed
+# we should not use yarn commands as the CMD (ie. `yarn start:prod` is a no-go)
+#
+# https://github.com/yarnpkg/yarn/issues/4667
+# CMD ["/usr/local/bin/yarn start:prod"]
+ENV NODE_PATH ./build
+RUN echo "/usr/local/bin/yarn db:migrate && /usr/local/bin/node build/index.js" > ./boot.sh
+CMD ["/bin/sh", "./boot.sh"]
