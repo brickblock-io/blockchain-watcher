@@ -53,7 +53,7 @@ const handleBuyEvent: HandleBuyEventT = async log => {
 
   await queries.archiveEvent(log)
 
-  logger.trace('handleBuyEvent->DONE for transaction hash', log.transactionHash)
+  logger.info('handleBuyEvent->DONE for transaction hash', log.transactionHash)
 }
 
 module.exports = handleBuyEvent
