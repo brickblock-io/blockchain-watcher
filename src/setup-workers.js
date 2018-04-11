@@ -123,6 +123,7 @@ const setupWorkers: SetupWorkersT = (
   eventChannel.on('workers/SIGTERM', () => {
     state.SIGTERM = true
     state.shutdownIntervalId = setInterval(handleShutdown, 1000)
+    logger.info('setupWorkers->EVENT workers/SIGTERM', 'starting to shutdown')
   })
 
   logger.info('setupWorkers->DONE')
