@@ -135,7 +135,7 @@ deploy-production:
   cache:
     policy: pull
   variables:
-    CONTRACT_ADDRESS: "0x123"
+    CONTRACT_ADDRESS: "0x0000000000000000000000000000000000000000"
     CONTRACT_DEPLOYED_AT_BLOCK: "2080918"
     KUBERNETES_REPLICAS: 1
     POSTGRES_INSTANCE: sonorous-cacao-185213:europe-west1:production-blockchain-watcher
