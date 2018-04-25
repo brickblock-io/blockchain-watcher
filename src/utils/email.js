@@ -47,9 +47,9 @@ const sendBuyEventEmail: SendBuyEventEmailT = (contactData, log) => {
     html: 'null',
     templateId: emailConfig.templates.BuyEvent,
     substitutions: {
-      amount: log.data.amount,
+      amount_of_poa: log.data.amount,
       name: contactData.name,
-      transactionHash: log.transactionHash
+      transaction_hash: log.transactionHash
     }
   }
 
