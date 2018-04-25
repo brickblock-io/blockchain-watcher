@@ -11,9 +11,9 @@ type SendGridMessageT<A> = {
 }
 
 type SendGridBuyEventSubstitutionsT = {|
-  amount: string,
+  amount_of_poa: string,
   name: string,
-  transactionHash: string
+  transaction_hash: string
 |}
 
 // ---
