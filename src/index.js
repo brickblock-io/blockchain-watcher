@@ -32,7 +32,7 @@ const setupWeb3Provider = config => {
 
 type BootstrapT = BootstrapConfigT => void
 const bootstrap: BootstrapT = config => {
-  logger.info('bootstrap->INIT', config)
+  logger.info('bootstrap->INIT', JSON.stringify(config))
 
   const eventChannel = new EventEmitter()
   const currentProvider = setupWeb3Provider(config)
